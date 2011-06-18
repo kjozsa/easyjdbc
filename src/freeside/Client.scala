@@ -24,13 +24,13 @@ object Client extends App {
     "boo"
   })
 
-  sqlhelper.query("select 1 from dual") { results: =>
+  sqlhelper.query("select 1 from dual") { results =>
     println(results.getString(1))
   }
 
-//  sqlhelper.query("select * from lofasz where id = ?") { statement =>
-//    statement.setString(1, "lofasz")
-//  } { results =>
-//    println(results.getString(1))
-//  }
+  //  sqlhelper.query("select * from lofasz where id = ?") { statement =>
+  //    statement.setString(1, "lofasz")
+  //  } { results =>
+  //    println(results.getString(1))
+  //  }
 }
