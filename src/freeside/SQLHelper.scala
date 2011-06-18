@@ -34,7 +34,9 @@ class SQLHelper(
       val statement = connection.prepareStatement(sql);
 
       params.view.zipWithIndex foreach {
-        case (param, position) =>
+        case (param, index) =>
+          val position = 1 + index
+
           param match {
             case param: Boolean => statement.setBoolean(position, param)
             case param: Byte => statement.setByte(position, param)
@@ -56,7 +58,6 @@ class SQLHelper(
         processed = resultProcessor(results) :: processed
       }
       processed
-
     }
   }
 
