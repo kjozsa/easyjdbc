@@ -1,0 +1,6 @@
+.classpath
+.project
+.settings
+.scala_dependencies
+project/boot
+
