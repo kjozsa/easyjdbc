@@ -4,6 +4,8 @@
 package freeside
 
 import java.sql.Connection
+import java.sql.Timestamp
+import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.PreparedStatement
 
@@ -16,6 +18,7 @@ class SQLHelper(
 
   println("using factory: " + factory + ", errorhandler: " + errorHandler)
 
+  /** execute 'something' using a new or wrapped connection */
   def execute[T](sqlBlock: Connection => T): T = {
     try {
       sqlBlock(factory.connection)
@@ -27,6 +30,10 @@ class SQLHelper(
   }
 
   def query[T](sql: String)(resultProcessor: ResultSet => T): List[T] = {
+    query2(sql)({ s => })(resultProcessor)
+  }
+
+  def query2[T](sql: String)(statementPrep: PreparedStatement => Unit)(resultProcessor: ResultSet => T): List[T] = {
     execute { connection =>
       val statement = connection.prepareStatement(sql);
       val results = statement.executeQuery;
@@ -36,6 +43,38 @@ class SQLHelper(
         processed = resultProcessor(results) :: processed
       }
       processed
+    }
+  }
+
+  def query3[T](sql: String, params: Any*)(resultProcessor: ResultSet => T): List[T] = {
+    execute { connection =>
+      val statement = connection.prepareStatement(sql);
+
+      var position = 1
+      params.foreach { x =>
+        x match {
+          case param: Boolean => statement.setBoolean(position, param)
+          case param: Byte => statement.setByte(position, param)
+          case param: Int => statement.setInt(position, param)
+          case param: Long => statement.setLong(position, param)
+          case param: Float => statement.setFloat(position, param)
+          case param: Double => statement.setDouble(position, param)
+          case param: Timestamp => statement.setTimestamp(position, param)
+          //          case param: BigDecimal => statement.setBigDecimal(position, param) @TODO bigdecimal 
+          case param: String => statement.setString(position, param)
+          case param => throw new UnsupportedOperationException("Unsupported parameter type of " + x)
+        }
+        position = position + 1
+      }
+
+      val results = statement.executeQuery;
+
+      var processed = List[T]()
+      while (results.next()) {
+        processed = resultProcessor(results) :: processed
+      }
+      processed
+
     }
   }
 
@@ -58,3 +97,4 @@ object SQLHelper {
     def prepare(e: Throwable): Throwable
   }
 }
+
