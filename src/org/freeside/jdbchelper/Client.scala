@@ -9,7 +9,7 @@ import org.freeside.jdbchelper.JDBCHelper.JNDIConnectionFactory
  * @author kjozsa
  */
 class Boot {
-  JDBCHelper.factory = new JNDIConnectionFactory("jdbc/jc_gateway")
+  JDBCHelper.factory = new JNDIConnectionFactory("java:comp/env/jdbc/jc_gateway")
   JDBCHelper.errorHandler = new ErrorHandler {
     override def handle(e: Throwable) = {
       println("oops")

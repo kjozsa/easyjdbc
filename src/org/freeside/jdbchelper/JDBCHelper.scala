@@ -20,7 +20,7 @@ trait JDBCHelper {
 
   /** execute something using a new or threadlocal connection */
   def sqlExecute[T](executeBlock: Connection => T): T = {
-    val connection = JDBCHelper.factory.connection
+    val connection = JDBCHelper.thread.get.connection
     try {
       executeBlock(connection)
     } catch {
@@ -28,6 +28,8 @@ trait JDBCHelper {
         rollback(connection)
         throw JDBCHelper.errorHandler.handle(e)
 
+    } finally {
+      JDBCHelper.thread.get.back
     }
   }
 
@@ -98,7 +100,7 @@ trait JDBCHelper {
 }
 
 object JDBCHelper {
-  var factory: ConnectionFactory = new JNDIConnectionFactory("jdbc/jc_gateway")
+  var factory: ConnectionFactory = null
   var errorHandler: ErrorHandler = new DefaultErrorHandler
 
   trait ConnectionFactory {
@@ -116,12 +118,39 @@ object JDBCHelper {
 
   class JNDIConnectionFactory(jndiName: String) extends ConnectionFactory {
     override def connection: Connection = {
-      val ic = new InitialContext()
-      val env = ic.lookup("java:comp/env").asInstanceOf[Context]
-      env.lookup(jndiName).asInstanceOf[DataSource].getConnection;
+      new InitialContext().lookup(jndiName).asInstanceOf[DataSource].getConnection;
     }
 
     override def toString = "JNDI connection factory to " + jndiName
   }
 
+  class ConnectionDepth {
+    private var depth = 0
+    private lazy val cached: Connection = factory.connection
+
+    def connection = {
+      depth = depth + 1
+      cached
+    }
+
+    def back {
+      depth = depth - 1
+      if (depth == 0) {
+        cleanup(cached)
+      }
+    }
+
+    private def cleanup(connection: Connection) {
+      try {
+        connection.close
+      } catch {
+        case e => // silent
+      }
+    }
+
+  }
+
+  val thread = new ThreadLocal[ConnectionDepth] {
+    override def initialValue = new ConnectionDepth
+  }
 }
