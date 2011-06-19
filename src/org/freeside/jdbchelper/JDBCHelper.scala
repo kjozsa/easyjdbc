@@ -5,12 +5,8 @@ package org.freeside.jdbchelper
 
 import java.sql.Connection
 import java.sql.Timestamp
-import java.sql.PreparedStatement
 import java.sql.ResultSet
-import java.sql.PreparedStatement
-import freeside.JNDIConnectionFactory
 import javax.naming.InitialContext
-import javax.naming.Context
 import javax.sql.DataSource
 
 /**
@@ -29,14 +25,14 @@ trait JDBCHelper {
         throw JDBCHelper.errorHandler.handle(e)
 
     } finally {
-      JDBCHelper.thread.get.back
+      JDBCHelper.thread.get.back()
     }
   }
 
   /** rollback, silence errors */
   private def rollback(connection: Connection) {
     try {
-      if (!connection.getAutoCommit) connection.rollback
+      if (!connection.getAutoCommit) connection.rollback()
     } catch {
       case e => // silent 
     }
@@ -70,7 +66,7 @@ trait JDBCHelper {
   def sqlUpdate(sql: String, params: Any*) {
     sqlExecute { connection =>
       val statement = prepareStatement(connection, sql, params)
-      statement executeQuery
+      statement.executeQuery
     }
   }
 
@@ -90,9 +86,9 @@ trait JDBCHelper {
           case param: Float => statement.setFloat(position, param)
           case param: Double => statement.setDouble(position, param)
           case param: Timestamp => statement.setTimestamp(position, param)
-          //          case param: BigDecimal => statement.setBigDecimal(position, param) @TODO turn bigdecimal to java 
+//          case param: BigDecimal => statement.setBigDecimal(position, param) // @TODO turn bigdecimal to java
           case param: String => statement.setString(position, param)
-          case param => throw new UnsupportedOperationException("Unsupported parameter type of " + param)
+          case other => throw new UnsupportedOperationException("Unsupported parameter type of " + param)
         }
     }
     statement
@@ -133,7 +129,7 @@ object JDBCHelper {
       cached
     }
 
-    def back {
+    def back() {
       depth = depth - 1
       if (depth == 0) {
         cleanup(cached)
@@ -142,7 +138,7 @@ object JDBCHelper {
 
     private def cleanup(connection: Connection) {
       try {
-        connection.close
+        connection.close()
       } catch {
         case e => // silent
       }
