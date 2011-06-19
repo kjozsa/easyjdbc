@@ -1,33 +1,33 @@
 /**
  *
  */
-package freeside
+package org.freeside.jdbchelper
 
 import java.sql.Connection
-
 import java.sql.Timestamp
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.PreparedStatement
+import freeside.JNDIConnectionFactory
+import javax.naming.InitialContext
+import javax.naming.Context
+import javax.sql.DataSource
 
 /**
  * @author kjozsa
  */
-class SQLHelper(
-  implicit factory: SQLHelper.ConnectionFactory,
-  errorHandler: SQLHelper.ErrorHandler = new SQLHelper.DefaultErrorHandler) {
-
-  println("using factory: " + factory + ", errorhandler: " + errorHandler)
+trait JDBCHelper {
 
   /** execute something using a new or threadlocal connection */
-  def execute[T](executeBlock: Connection => T): T = {
-    val connection = factory.connection
+  def sqlExecute[T](executeBlock: Connection => T): T = {
+    val connection = JDBCHelper.factory.connection
     try {
       executeBlock(connection)
     } catch {
       case e =>
         rollback(connection)
-        throw errorHandler.prepare(e)
+        throw JDBCHelper.errorHandler.handle(e)
+
     }
   }
 
@@ -41,8 +41,8 @@ class SQLHelper(
   }
 
   /** execute an sql query and process a list of results by records */
-  def query[T](sql: String, params: Any*)(resultProcessor: ResultSet => T): List[T] = {
-    execute { connection =>
+  def sqlQuery[T](sql: String, params: Any*)(resultProcessor: ResultSet => T): List[T] = {
+    sqlExecute { connection =>
       val statement = prepareStatement(connection, sql, params)
       val results = statement.executeQuery;
 
@@ -55,8 +55,8 @@ class SQLHelper(
   }
 
   /** query for 0 or 1 record */
-  def queryOne[T](sql: String, params: Any*)(resultProcessor: ResultSet => T): Option[T] = {
-    val results = query(sql, params)(resultProcessor)
+  def sqlQueryOne[T](sql: String, params: Any*)(resultProcessor: ResultSet => T): Option[T] = {
+    val results = sqlQuery(sql, params)(resultProcessor)
     results.length match {
       case 0 => None
       case 1 => Some(results.head)
@@ -65,8 +65,8 @@ class SQLHelper(
   }
 
   /** execute an update */
-  def update(sql: String, params: Any*) {
-    execute { connection =>
+  def sqlUpdate(sql: String, params: Any*) {
+    sqlExecute { connection =>
       val statement = prepareStatement(connection, sql, params)
       statement executeQuery
     }
@@ -97,17 +97,31 @@ class SQLHelper(
   }
 }
 
-object SQLHelper {
+object JDBCHelper {
+  var factory: ConnectionFactory = new JNDIConnectionFactory("jdbc/jc_gateway")
+  var errorHandler: ErrorHandler = new DefaultErrorHandler
+
   trait ConnectionFactory {
     def connection: Connection
   }
   trait ErrorHandler {
-    def prepare(e: Throwable): Throwable
+    def handle(e: Throwable): Throwable
   }
 
-  class DefaultErrorHandler extends SQLHelper.ErrorHandler {
-    override def prepare(e: Throwable) = {
-      new RuntimeException(e)
+  class DefaultErrorHandler extends ErrorHandler {
+    override def handle(e: Throwable) = {
+      throw new RuntimeException(e)
     }
   }
+
+  class JNDIConnectionFactory(jndiName: String) extends ConnectionFactory {
+    override def connection: Connection = {
+      val ic = new InitialContext()
+      val env = ic.lookup("java:comp/env").asInstanceOf[Context]
+      env.lookup(jndiName).asInstanceOf[DataSource].getConnection;
+    }
+
+    override def toString = "JNDI connection factory to " + jndiName
+  }
+
 }
