@@ -25,14 +25,14 @@ trait JDBCHelper {
         throw JDBCHelper.errorHandler.handle(e)
 
     } finally {
-      JDBCHelper.thread.get.back()
+      JDBCHelper.thread.get.back
     }
   }
 
   /** rollback, silence errors */
   private def rollback(connection: Connection) {
     try {
-      if (!connection.getAutoCommit) connection.rollback()
+      if (!connection.getAutoCommit) connection.rollback
     } catch {
       case e => // silent 
     }
@@ -45,10 +45,10 @@ trait JDBCHelper {
       val results = statement.executeQuery;
 
       var processed: List[T] = Nil
-      while (results.next()) {
+      while (results.next) {
         processed = resultProcessor(results) :: processed
       }
-      processed
+      processed.reverse
     }
   }
 
@@ -86,7 +86,7 @@ trait JDBCHelper {
           case param: Float => statement.setFloat(position, param)
           case param: Double => statement.setDouble(position, param)
           case param: Timestamp => statement.setTimestamp(position, param)
-//          case param: BigDecimal => statement.setBigDecimal(position, param) // @TODO turn bigdecimal to java
+          //          case param: BigDecimal => statement.setBigDecimal(position, param) // @TODO turn bigdecimal to java
           case param: String => statement.setString(position, param)
           case other => throw new UnsupportedOperationException("Unsupported parameter type of " + param)
         }
@@ -129,7 +129,7 @@ object JDBCHelper {
       cached
     }
 
-    def back() {
+    def back {
       depth = depth - 1
       if (depth == 0) {
         cleanup(cached)
@@ -138,7 +138,7 @@ object JDBCHelper {
 
     private def cleanup(connection: Connection) {
       try {
-        connection.close()
+        connection.close
       } catch {
         case e => // silent
       }
