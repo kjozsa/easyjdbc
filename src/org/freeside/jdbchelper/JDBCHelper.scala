@@ -97,7 +97,7 @@ trait JDBCHelper {
 
 object JDBCHelper {
   var factory: ConnectionFactory = null
-  var errorHandler: ErrorHandler = new DefaultErrorHandler
+  var errorHandler: ErrorHandler = DefaultErrorHandler
 
   trait ConnectionFactory {
     def connection: Connection
@@ -106,7 +106,7 @@ object JDBCHelper {
     def handle(e: Throwable): Throwable
   }
 
-  class DefaultErrorHandler extends ErrorHandler {
+  object DefaultErrorHandler extends ErrorHandler {
     override def handle(e: Throwable) = {
       throw new RuntimeException(e)
     }
