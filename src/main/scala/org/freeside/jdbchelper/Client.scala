@@ -30,8 +30,8 @@ class Client extends Parent with JDBCHelper {
   sqlQuery("select 1 from dual") { _.getString(1) }
 
   // select for one 
-  val zip: Option[Tuple2[String, Boolean]] = sqlQueryOne("select city, zip from person where name = ?", "Joe") { rs => (rs.getString(2), rs.getBoolean(3)) }
-  val client: Option[Boolean] = sqlQueryOne("select is_client from person where name = ?", "Joe") { _.getBoolean(1) }
+  val client = sqlQueryOne("select is_client from person where name = ?", "Joe") { _.getBoolean(1) }
+  val city, zip = sqlQueryOne("select city, zip from person where name = ?", "Joe") { rs => (rs.getString(2), rs.getBoolean(3)) }
 
   // with parameters
   val name, date = ("Joe", new java.util.Date())

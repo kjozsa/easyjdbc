@@ -8,6 +8,8 @@ import java.sql.Timestamp
 import java.sql.ResultSet
 import javax.naming.InitialContext
 import javax.sql.DataSource
+import java.sql.PreparedStatement
+import java.sql.Types
 
 /**
  * @author kjozsa
@@ -42,7 +44,7 @@ trait JDBCHelper {
   def sqlQuery[T](sql: String, params: Any*)(resultProcessor: ResultSet => T): List[T] = {
     sqlExecute { connection =>
       val statement = prepareStatement(connection, sql, params)
-      val results = statement.executeQuery;
+      val results = statement.executeQuery
 
       var processed: List[T] = Nil
       while (results.next) {
@@ -72,27 +74,37 @@ trait JDBCHelper {
 
   /** set the parameters on the prepared statement */
   private def prepareStatement(connection: Connection, sql: String, params: Any*) = {
-    val statement = connection.prepareStatement(sql);
+    val statement = connection.prepareStatement(sql)
 
     params.view.zipWithIndex foreach {
-      case (param, index) =>
+      case (value, index) =>
         val position = 1 + index
 
-        param match {
-          case param: Boolean => statement.setBoolean(position, param)
-          case param: Byte => statement.setByte(position, param)
-          case param: Int => statement.setInt(position, param)
-          case param: Long => statement.setLong(position, param)
-          case param: Float => statement.setFloat(position, param)
-          case param: Double => statement.setDouble(position, param)
-          case param: Timestamp => statement.setTimestamp(position, param)
-          //          case param: BigDecimal => statement.setBigDecimal(position, param) // @TODO turn bigdecimal to java
-          case param: String => statement.setString(position, param)
-          case other => throw new UnsupportedOperationException("Unsupported parameter type of " + param)
-        }
+        addParameter(statement, position, value)
     }
     statement
   }
+
+  /** handle any other type */
+  private def addParameter(statement: PreparedStatement, position: Int, value: Any) {
+    value match {
+      case null => statement.setNull(position, Types.NULL)
+      case None => statement.setNull(position, Types.NULL)
+      case Some(value) => addParameter(statement, position, value)
+
+      case value: Boolean => statement.setBoolean(position, value)
+      case value: Byte => statement.setByte(position, value)
+      case value: Int => statement.setInt(position, value)
+      case value: Long => statement.setLong(position, value)
+      case value: Float => statement.setFloat(position, value)
+      case value: Double => statement.setDouble(position, value)
+      case value: Timestamp => statement.setTimestamp(position, value)
+      //      case value: BigDecimal => statement.setBigDecimal(position, value) // @TODO convert to java bigdecimal
+      case value: String => statement.setString(position, value)
+      case other => throw new UnsupportedOperationException("Unsupported parameter type of " + other)
+    }
+  }
+
 }
 
 object JDBCHelper {
@@ -114,7 +126,7 @@ object JDBCHelper {
 
   class JNDIConnectionFactory(jndiName: String) extends ConnectionFactory {
     override def connection: Connection = {
-      new InitialContext().lookup(jndiName).asInstanceOf[DataSource].getConnection;
+      new InitialContext().lookup(jndiName).asInstanceOf[DataSource].getConnection
     }
 
     override def toString = "JNDI connection factory to " + jndiName
