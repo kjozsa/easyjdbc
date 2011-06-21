@@ -31,6 +31,12 @@ class TestPrepareStatement extends FunSuite with MockitoSugar with BeforeAndAfte
         prepareStatement(connection, "select missing from parameter where stuff = ?")
       }
     }
+
+    intercept[AssertionError] {
+      new Object with JDBCHelper {
+        prepareStatement(connection, "select missing from parameter where stuff = ?", "too", "much")
+      }
+    }
   }
 
   test("parameterless") {
@@ -47,24 +53,32 @@ class TestPrepareStatement extends FunSuite with MockitoSugar with BeforeAndAfte
     verify(statement).setNull(2, Types.NULL)
   }
 
-  test("Option type parameter") {
+  test("Option type") {
     new Object with JDBCHelper {
       prepareStatement(connection, "..where name = ?", Some("Joe"))
     }
     verify(statement).setString(1, "Joe")
   }
 
-  test("string parameter") {
+  test("string type") {
     new Object with JDBCHelper {
       prepareStatement(connection, "select * from person where name = ?", "Joe")
     }
     verify(statement).setString(1, "Joe")
   }
 
-  test("boolean parameter") {
+  test("boolean type") {
     new Object with JDBCHelper {
       prepareStatement(connection, "select * from person where divorced = ?", false)
     }
     verify(statement).setBoolean(1, false)
   }
+
+  test("byte type") { pending }
+  test("int type") { pending }
+  test("long type") { pending }
+  test("float type") { pending }
+  test("double type") { pending }
+  test("timestamp type") { pending }
+  test("bigdecimal type") { pending }
 }

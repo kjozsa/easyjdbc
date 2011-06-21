@@ -10,6 +10,7 @@ import javax.naming.InitialContext
 import javax.sql.DataSource
 import java.sql.PreparedStatement
 import java.sql.Types
+import collection.Iterator
 
 /**
  * @author kjozsa
@@ -40,17 +41,20 @@ trait JDBCHelper {
     }
   }
 
+  private implicit def iterableResultSet(in: ResultSet): Iterator[ResultSet] = {
+    new Iterator[ResultSet] {
+      override def hasNext = in.next()
+      override def next = in
+    }
+  }
+
   /** execute an sql query and process a list of results by records */
-  def sqlQuery[T](sql: String, params: Any*)(resultProcessor: ResultSet => T): List[T] = {
+  def sqlQuery[T](sql: String, params: Any*)(resultProcessor: ResultSet => T): Iterator[T] = {
     sqlExecute { connection =>
       val statement = prepareStatement(connection, sql, params)
       val results = statement.executeQuery
 
-      var processed: List[T] = Nil
-      while (results.next) {
-        processed = resultProcessor(results) :: processed
-      }
-      processed.reverse
+      results.map(resultProcessor(_))
     }
   }
 
@@ -59,7 +63,7 @@ trait JDBCHelper {
     val results = sqlQuery(sql, params)(resultProcessor)
     results.length match {
       case 0 => None
-      case 1 => Some(results.head)
+      case 1 => Some(results.next)
       case x => throw new IllegalStateException("More than one records found")
     }
   }
