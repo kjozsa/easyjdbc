@@ -73,7 +73,8 @@ trait JDBCHelper {
   }
 
   /** set the parameters on the prepared statement */
-  private def prepareStatement(connection: Connection, sql: String, params: Any*) = {
+  private[jdbchelper] def prepareStatement(connection: Connection, sql: String, params: Any*) = {
+    assert(sql.count(_ == '?') == params.size, "Incorrect number of PreparedStatement parameters")
     val statement = connection.prepareStatement(sql)
 
     params.view.zipWithIndex foreach {
