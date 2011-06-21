@@ -120,7 +120,7 @@ object JDBCHelper {
     override def toString = "JNDI connection factory to " + jndiName
   }
 
-  class ConnectionDepth {
+  private[jdbchelper] class ConnectionManager {
     private var depth = 0
     private lazy val cached: Connection = factory.connection
 
@@ -143,10 +143,9 @@ object JDBCHelper {
         case e => // silent
       }
     }
-
   }
 
-  val thread = new ThreadLocal[ConnectionDepth] {
-    override def initialValue = new ConnectionDepth
+  private[jdbchelper] val thread = new ThreadLocal[ConnectionManager] {
+    override def initialValue = new ConnectionManager
   }
 }
