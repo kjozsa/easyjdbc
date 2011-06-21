@@ -7,21 +7,19 @@ import org.mockito.Mockito._
 import org.freeside.jdbchelper.JDBCHelper.ConnectionManager
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.FunSuite
+import org.scalatest.BeforeAndAfter
 
 /**
  * @author kjozsa
  */
-class TestJDBCHelper extends FunSuite with MockitoSugar {
-  test("not yet") { pending }
+class TestJDBCHelper extends FunSuite with MockitoSugar with BeforeAndAfter {
+  val connectionManager = mock[ConnectionManager]
 
-  test("hello world") {
-    assert(1 + 1 == 2)
+  before {
+    JDBCHelper.thread.set(connectionManager)
   }
 
-  test("sqlExecute handles threadlocal") {
-    val connectionManager = mock[ConnectionManager]
-    JDBCHelper.thread.set(connectionManager)
-
+  test("sqlExecute borrows threadlocal connection") {
     new Object with JDBCHelper {
       sqlExecute(c => {})
       println("boo")
@@ -29,5 +27,15 @@ class TestJDBCHelper extends FunSuite with MockitoSugar {
 
     verify(connectionManager).connection
     verify(connectionManager).back
+  }
+
+  test("nested sqlExecute uses the same connection") {
+    new Object with JDBCHelper {
+      sqlExecute(c1 => {
+        sqlExecute(c2 => {
+          assert(c1 eq c2)
+        })
+      })
+    }
   }
 }
