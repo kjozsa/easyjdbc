@@ -1,16 +1,16 @@
 /**
  *
  */
-package org.freeside.jdbchelper
-import org.freeside.jdbchelper.JDBCHelper.ErrorHandler
-import org.freeside.jdbchelper.JDBCHelper.JNDIConnectionFactory
+package org.freeside.easyjdbc
+import org.freeside.easyjdbc.EasyJDBC.ErrorHandler
+import org.freeside.easyjdbc.EasyJDBC.JNDIConnectionFactory
 
 /**
  * @author kjozsa
  */
 class Boot {
-  JDBCHelper.factory = new JNDIConnectionFactory("java:comp/env/jdbc/jc_gateway")
-  JDBCHelper.errorHandler = new ErrorHandler {
+  EasyJDBC.factory = new JNDIConnectionFactory("java:comp/env/jdbc/jc_gateway")
+  EasyJDBC.errorHandler = new ErrorHandler {
     override def handle(e: Throwable) = {
       println("oops")
       e
@@ -20,7 +20,7 @@ class Boot {
 
 class Parent
 
-class Client extends Parent with JDBCHelper {
+class Client extends Parent with EasyJDBC {
   // plain query, ok
   sqlQuery("select 1 from dual") { results =>
     println(results.getString(1))

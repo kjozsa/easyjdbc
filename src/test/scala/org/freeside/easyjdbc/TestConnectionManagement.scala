@@ -1,17 +1,14 @@
 /**
  *
  */
-package org.freeside.jdbchelper
+package org.freeside.easyjdbc
 
-import org.mockito.Mockito._
-import org.freeside.jdbchelper.JDBCHelper.ConnectionManager
-import org.scalatest.mock.MockitoSugar
-import org.scalatest.FunSuite
-import org.scalatest.BeforeAndAfter
 import java.sql.Connection
-import org.freeside.jdbchelper.JDBCHelper.ErrorHandler
-import org.mockito.Mockito
-import org.mockito.Matchers
+import org.freeside.easyjdbc.EasyJDBC.{ ConnectionManager, ErrorHandler }
+import org.mockito.Mockito._
+import org.mockito.{ Matchers, Mockito }
+import org.scalatest.mock.MockitoSugar
+import org.scalatest.{ BeforeAndAfter, FunSuite }
 
 /**
  * @author kjozsa
@@ -20,11 +17,11 @@ class TestConnectionManagement extends FunSuite with MockitoSugar with BeforeAnd
   val connectionManager = mock[ConnectionManager]
 
   before {
-    JDBCHelper.thread.set(connectionManager)
+    EasyJDBC.thread.set(connectionManager)
   }
 
   test("sqlExecute borrows threadlocal connection") {
-    new Object with JDBCHelper {
+    new Object with EasyJDBC {
       sqlExecute(c => {})
       println("boo")
     }
@@ -34,7 +31,7 @@ class TestConnectionManagement extends FunSuite with MockitoSugar with BeforeAnd
   }
 
   test("nested sqlExecute uses the same connection") {
-    new Object with JDBCHelper {
+    new Object with EasyJDBC {
       sqlExecute { c1 =>
         sqlExecute { c2 =>
           assert(c1 eq c2)
@@ -48,7 +45,7 @@ class TestConnectionManagement extends FunSuite with MockitoSugar with BeforeAnd
     when(connectionManager.connection).thenReturn(connection)
 
     intercept[RuntimeException] {
-      new Object with JDBCHelper {
+      new Object with EasyJDBC {
         sqlExecute { c => throw new RuntimeException }
       }
     }
@@ -57,10 +54,10 @@ class TestConnectionManagement extends FunSuite with MockitoSugar with BeforeAnd
 
   test("errorHandler is called on error") {
     val errorHandler = mock[ErrorHandler]
-    JDBCHelper.errorHandler = errorHandler
+    EasyJDBC.errorHandler = errorHandler
 
     intercept[RuntimeException] {
-      new Object with JDBCHelper {
+      new Object with EasyJDBC {
         sqlExecute { c => throw new RuntimeException }
       }
     }

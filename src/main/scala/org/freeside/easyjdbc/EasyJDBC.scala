@@ -1,7 +1,7 @@
 /**
  *
  */
-package org.freeside.jdbchelper
+package org.freeside.easyjdbc
 
 import java.sql.Connection
 import java.sql.Timestamp
@@ -15,20 +15,20 @@ import collection.Iterator
 /**
  * @author kjozsa
  */
-trait JDBCHelper {
+trait EasyJDBC {
 
   /** execute something using a new or threadlocal connection */
   def sqlExecute[T](executeBlock: Connection => T): T = {
-    val connection = JDBCHelper.thread.get.connection
+    val connection = EasyJDBC.thread.get.connection
     try {
       executeBlock(connection)
     } catch {
       case e =>
         rollback(connection)
-        throw JDBCHelper.errorHandler.handle(e)
+        throw EasyJDBC.errorHandler.handle(e)
 
     } finally {
-      JDBCHelper.thread.get.back
+      EasyJDBC.thread.get.back
     }
   }
 
@@ -77,7 +77,7 @@ trait JDBCHelper {
   }
 
   /** set the parameters on the prepared statement */
-  private[jdbchelper] def prepareStatement(connection: Connection, sql: String, params: Any*) = {
+  private[easyjdbc] def prepareStatement(connection: Connection, sql: String, params: Any*) = {
     assert(sql.count(_ == '?') == params.size, "Incorrect number of PreparedStatement parameters")
     val statement = connection.prepareStatement(sql)
 
@@ -112,7 +112,7 @@ trait JDBCHelper {
 
 }
 
-object JDBCHelper {
+object EasyJDBC {
   var factory: ConnectionFactory = null
   var errorHandler: ErrorHandler = DefaultErrorHandler
 
@@ -137,7 +137,7 @@ object JDBCHelper {
     override def toString = "JNDI connection factory to " + jndiName
   }
 
-  private[jdbchelper] class ConnectionManager {
+  private[easyjdbc] class ConnectionManager {
     private var depth = 0
     private lazy val cached: Connection = factory.connection
 
@@ -162,7 +162,7 @@ object JDBCHelper {
     }
   }
 
-  private[jdbchelper] val thread = new ThreadLocal[ConnectionManager] {
+  private[easyjdbc] val thread = new ThreadLocal[ConnectionManager] {
     override def initialValue = new ConnectionManager
   }
 }
