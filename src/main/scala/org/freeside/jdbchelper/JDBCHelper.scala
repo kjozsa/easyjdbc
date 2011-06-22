@@ -41,15 +41,15 @@ trait JDBCHelper {
     }
   }
 
-  private implicit def iterableResultSet(in: ResultSet): Iterator[ResultSet] = {
-    new Iterator[ResultSet] {
-      override def hasNext = in.next()
-      override def next = in
-    }
-  }
-
   /** execute an sql query and process a list of results by records */
   def sqlQuery[T](sql: String, params: Any*)(resultProcessor: ResultSet => T): Iterator[T] = {
+    implicit def iterableResultSet(rs: ResultSet) = {
+      new Iterator[ResultSet] {
+        override def hasNext = rs.next()
+        override def next = rs
+      }
+    }
+
     sqlExecute { connection =>
       val statement = prepareStatement(connection, sql, params)
       val results = statement.executeQuery
