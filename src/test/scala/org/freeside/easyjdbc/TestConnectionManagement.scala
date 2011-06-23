@@ -4,11 +4,11 @@
 package org.freeside.easyjdbc
 
 import java.sql.Connection
-import org.freeside.easyjdbc.EasyJDBC.{ ConnectionManager, ErrorHandler }
+import org.freeside.easyjdbc.EasyJDBC.{ConnectionManager, ErrorHandler}
 import org.mockito.Mockito._
-import org.mockito.{ Matchers, Mockito }
+import org.mockito.Matchers
 import org.scalatest.mock.MockitoSugar
-import org.scalatest.{ BeforeAndAfter, FunSuite }
+import org.scalatest.{BeforeAndAfter, FunSuite}
 
 /**
  * @author kjozsa

@@ -75,7 +75,7 @@ class TestPrepareStatement extends FunSuite with MockitoSugar with BeforeAndAfte
   }
 
   test("byte type") { pending }
-  test("int type") { pending }
+  test("int type") {  pending }
   test("long type") { pending }
   test("float type") { pending }
   test("double type") { pending }

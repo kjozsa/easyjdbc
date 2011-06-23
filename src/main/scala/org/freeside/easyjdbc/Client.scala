@@ -2,6 +2,7 @@
  *
  */
 package org.freeside.easyjdbc
+
 import org.freeside.easyjdbc.EasyJDBC.ErrorHandler
 import org.freeside.easyjdbc.EasyJDBC.JNDIConnectionFactory
 
@@ -31,7 +32,9 @@ class Client extends Parent with EasyJDBC {
 
   // select for one 
   val client = sqlQueryOne("select is_client from person where name = ?", "Joe") { _.getBoolean(1) }
-  val city, zip = sqlQueryOne("select city, zip from person where name = ?", "Joe") { rs => (rs.getString(2), rs.getBoolean(3)) }
+  val city, zip = sqlQueryOne("select city, zip from person where name = ?", "Joe") { rs =>
+    (rs.getString(2), rs.getBoolean(3))
+  }
 
   // with parameters
   val name, date = ("Joe", new java.util.Date())
