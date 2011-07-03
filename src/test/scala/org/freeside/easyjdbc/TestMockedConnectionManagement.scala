@@ -6,14 +6,14 @@ package org.freeside.easyjdbc
 import java.sql.Connection
 import org.freeside.easyjdbc.EasyJDBC.{ConnectionManager, ErrorHandler}
 import org.mockito.Mockito._
-import org.mockito.Matchers
+import org.mockito.Matchers._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite}
 
 /**
  * @author kjozsa
  */
-class TestConnectionManagement extends FunSuite with MockitoSugar with BeforeAndAfter {
+class TestMockedConnectionManagement extends FunSuite with MockitoSugar with BeforeAndAfter {
   val connectionManager = mock[ConnectionManager]
 
   before {
@@ -34,10 +34,21 @@ class TestConnectionManagement extends FunSuite with MockitoSugar with BeforeAnd
     new Object with EasyJDBC {
       sqlExecute { c1 =>
         sqlExecute { c2 =>
-          assert(c1 eq c2)
+          assert(c1 === c2)
         }
       }
     }
+  }
+
+  var first: Connection = null
+  test("subsequent calls use different connection") {
+    new Object with EasyJDBC {
+      sqlExecute(c => first = c)
+    }
+    new Object with EasyJDBC {
+      sqlExecute(c => assert(first === c))
+    }
+
   }
 
   test("connection is rolled back on error") {
@@ -61,6 +72,6 @@ class TestConnectionManagement extends FunSuite with MockitoSugar with BeforeAnd
         sqlExecute { c => throw new RuntimeException }
       }
     }
-    verify(errorHandler).handle(Matchers.any())
+    verify(errorHandler).handle(any())
   }
 }
