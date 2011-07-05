@@ -113,7 +113,6 @@ trait EasyJDBC {
   }
 }
 
-
 object EasyJDBC {
   var factory: ConnectionFactory = null
   var errorHandler: ErrorHandler = DefaultErrorHandler
@@ -133,8 +132,10 @@ object EasyJDBC {
   }
 
   class JNDIConnectionFactory(jndiName: String) extends ConnectionFactory {
+    val dataSource: DataSource = new InitialContext().lookup(jndiName).asInstanceOf[DataSource]
+
     override def connection: Connection = {
-      new InitialContext().lookup(jndiName).asInstanceOf[DataSource].getConnection
+      dataSource.getConnection
     }
 
     override def toString = "JNDI connection factory to " + jndiName
@@ -144,15 +145,15 @@ object EasyJDBC {
     private var depth = 0
     private lazy val cached: Connection = factory.connection
 
-    if (factory == null) throw new IllegalArgumentException("No factory configured for EasyJDBC. Make sure you set the EasyJDBC.factory field!")
+    assert(factory != null, "No factory configured for EasyJDBC. Make sure you set the EasyJDBC.factory field!")
 
     def connection = {
-      depth = depth + 1
+      depth += 1
       cached
     }
 
     def back {
-      depth = depth - 1
+      depth -= 1
       if (depth == 0) {
         cleanup(cached)
       }

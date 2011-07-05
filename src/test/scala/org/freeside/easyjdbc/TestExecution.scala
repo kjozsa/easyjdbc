@@ -3,9 +3,9 @@ package org.freeside.easyjdbc
 import org.mockito.Mockito._
 import org.mockito.Matchers._
 import org.scalatest.mock.MockitoSugar
-import org.scalatest.{BeforeAndAfter, FunSuite}
-import org.freeside.easyjdbc.EasyJDBC.{DefaultErrorHandler, ConnectionFactory}
-import java.sql.{ResultSet, PreparedStatement, Connection}
+import org.scalatest.{ BeforeAndAfter, FunSuite }
+import org.freeside.easyjdbc.EasyJDBC.{ DefaultErrorHandler, ConnectionFactory }
+import java.sql.{ ResultSet, PreparedStatement, Connection }
 
 /**
  * @author kjozsa

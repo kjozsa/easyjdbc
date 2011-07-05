@@ -4,11 +4,11 @@
 package org.freeside.easyjdbc
 
 import java.sql.Connection
-import org.freeside.easyjdbc.EasyJDBC.{ConnectionManager, ErrorHandler}
+import org.freeside.easyjdbc.EasyJDBC.{ ConnectionManager, ErrorHandler }
 import org.mockito.Mockito._
 import org.mockito.Matchers._
 import org.scalatest.mock.MockitoSugar
-import org.scalatest.{BeforeAndAfter, FunSuite}
+import org.scalatest.{ BeforeAndAfter, FunSuite }
 
 /**
  * @author kjozsa
@@ -38,17 +38,6 @@ class TestMockedConnectionManagement extends FunSuite with MockitoSugar with Bef
         }
       }
     }
-  }
-
-  var first: Connection = null
-  test("subsequent calls use different connection") {
-    new Object with EasyJDBC {
-      sqlExecute(c => first = c)
-    }
-    new Object with EasyJDBC {
-      sqlExecute(c => assert(first === c))
-    }
-
   }
 
   test("connection is rolled back on error") {
