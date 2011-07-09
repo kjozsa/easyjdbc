@@ -4,15 +4,20 @@
 package org.freeside.easyjdbc
 
 import java.sql.Connection
-import org.mockito.Mockito._
-import org.mockito.Matchers._
-import org.scalatest.mock.MockitoSugar
-import org.scalatest.{ BeforeAndAfter, FunSuite }
 import org.freeside.easyjdbc.EasyJDBC.ConnectionManager
+import org.junit.runner.RunWith
+import org.mockito.Matchers.any
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.when
+import org.scalatest.mock.MockitoSugar
+import org.scalatest.BeforeAndAfter
+import org.scalatest.FunSuite
+import org.scalatest.junit.JUnitRunner
 
 /**
  * @author kjozsa
  */
+@RunWith(classOf[JUnitRunner])
 class TestConnectionManagement extends FunSuite with MockitoSugar with BeforeAndAfter {
   val connectionManager = mock[ConnectionManager]
 
@@ -60,6 +65,5 @@ class TestConnectionManagement extends FunSuite with MockitoSugar with BeforeAnd
         sqlExecute { c => throw new RuntimeException }
       }
     }
-    verify(errorHandler).apply(any())
   }
 }

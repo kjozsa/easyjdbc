@@ -11,10 +11,13 @@ import java.sql.Connection
 import org.mockito.Matchers._
 import java.sql.PreparedStatement
 import java.sql.Types
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 
 /**
  * @author kjozsa
  */
+@RunWith(classOf[JUnitRunner])
 class TestPrepareStatement extends FunSuite with MockitoSugar with BeforeAndAfter {
   val connection = mock[Connection]
   val statement = mock[PreparedStatement]

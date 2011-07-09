@@ -1,16 +1,20 @@
 package org.freeside.easyjdbc
 
-import org.mockito.Mockito._
-import org.mockito.Matchers._
-import org.scalatest.mock.MockitoSugar
-import org.scalatest.{ BeforeAndAfter, FunSuite }
-import java.sql.{ ResultSet, PreparedStatement, Connection }
+import java.sql.Connection
+import java.sql.PreparedStatement
+import java.sql.ResultSet
 import org.junit.runner.RunWith
+import org.mockito.Matchers.any
+import org.mockito.Mockito.when
+import org.scalatest.mock.MockitoSugar
+import org.scalatest.BeforeAndAfter
+import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 
 /**
  * @author kjozsa
  */
+@RunWith(classOf[JUnitRunner])
 class TestExecution extends FunSuite with MockitoSugar with BeforeAndAfter {
 
   test("plain execute") {

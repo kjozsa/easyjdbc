@@ -4,17 +4,20 @@ import java.sql.Connection
 import org.mockito.Mockito._
 import org.scalatest.{ BeforeAndAfter, FunSuite }
 import org.scalatest.mock.MockitoSugar
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 
 /**
  * @author kjozsa
  */
+@RunWith(classOf[JUnitRunner])
 class TestConnectionFactoryUsage extends FunSuite with MockitoSugar with BeforeAndAfter {
 
   // counts how many time the connection was borrowed from the factory
-  var count: Int = 
-  _
+  var count: Int =
+    _
 
-  before ({
+  before({
     count = 0
     EasyJDBC.connection = () => {
       count += 1
@@ -22,7 +25,7 @@ class TestConnectionFactoryUsage extends FunSuite with MockitoSugar with BeforeA
     }
   })
 
-  test("subsequent calls use the same connection") ({
+  test("subsequent calls use the same connection")({
     new EasyJDBC {
       sqlExecute(c => {})
       sqlExecute(c => {})
@@ -30,7 +33,7 @@ class TestConnectionFactoryUsage extends FunSuite with MockitoSugar with BeforeA
     assert(count === 1)
   })
 
-  test("separate calls use different connection from factory") ({
+  test("separate calls use different connection from factory")({
     new Object with EasyJDBC {
       sqlExecute(c => {})
     }
