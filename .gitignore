@@ -10,3 +10,4 @@ project/target
 .idea
 out
 *.iml
+testdb.h2.*

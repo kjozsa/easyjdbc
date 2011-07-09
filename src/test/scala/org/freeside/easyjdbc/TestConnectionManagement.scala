@@ -27,7 +27,7 @@ class TestConnectionManagement extends FunSuite with MockitoSugar with BeforeAnd
 
   test("sqlExecute borrows threadlocal connection") {
     new Object with EasyJDBC {
-      sqlExecute(c => {})
+      withConnection(c => {})
     }
 
     verify(connectionManager).borrow
@@ -36,8 +36,8 @@ class TestConnectionManagement extends FunSuite with MockitoSugar with BeforeAnd
 
   test("nested sqlExecute uses the same connection") {
     new Object with EasyJDBC {
-      sqlExecute { c1 =>
-        sqlExecute { c2 =>
+      withConnection { c1 =>
+        withConnection { c2 =>
           assert(c1.eq(c2))
         }
       }
@@ -50,7 +50,7 @@ class TestConnectionManagement extends FunSuite with MockitoSugar with BeforeAnd
 
     intercept[RuntimeException] {
       new Object with EasyJDBC {
-        sqlExecute { c => throw new RuntimeException }
+        withConnection { c => throw new RuntimeException }
       }
     }
     verify(connection).rollback
@@ -62,7 +62,7 @@ class TestConnectionManagement extends FunSuite with MockitoSugar with BeforeAnd
 
     intercept[RuntimeException] {
       new Object with EasyJDBC {
-        sqlExecute { c => throw new RuntimeException }
+        withConnection { c => throw new RuntimeException }
       }
     }
   }

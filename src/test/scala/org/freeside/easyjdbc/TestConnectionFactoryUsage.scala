@@ -14,12 +14,11 @@ import org.scalatest.junit.JUnitRunner
 class TestConnectionFactoryUsage extends FunSuite with MockitoSugar with BeforeAndAfter {
 
   // counts how many time the connection was borrowed from the factory
-  var count: Int =
-    _
+  var count: Int = _
 
   before({
     count = 0
-    EasyJDBC.connection = () => {
+    EasyJDBC.connection = { () =>
       count += 1
       mock[Connection]
     }
@@ -27,20 +26,20 @@ class TestConnectionFactoryUsage extends FunSuite with MockitoSugar with BeforeA
 
   test("subsequent calls use the same connection")({
     new EasyJDBC {
-      sqlExecute(c => {})
-      sqlExecute(c => {})
+      withConnection(c => {})
+      withConnection(c => {})
     }
     assert(count === 1)
   })
 
   test("separate calls use different connection from factory")({
     new Object with EasyJDBC {
-      sqlExecute(c => {})
+      withConnection(c => {})
     }
     assert(count === 1)
 
     new Object with EasyJDBC {
-      sqlExecute(c => {})
+      withConnection(c => {})
     }
     assert(count === 2)
   })
