@@ -19,16 +19,16 @@ trait EasyJDBC {
 
   /**execute something using a new or threadlocal connection */
   def sqlExecute[T](executeBlock: Connection => T): T = {
-    val connection = EasyJDBC.thread.get.connection
+    val connection = EasyJDBC.borrowConnection
     try {
       executeBlock(connection)
     } catch {
       case e =>
         rollback(connection)
-        throw EasyJDBC.errorHandler.handle(e)
+        throw EasyJDBC.errorHandler(e)
 
     } finally {
-      EasyJDBC.thread.get.back
+      EasyJDBC.returnConnection
     }
   }
 
@@ -51,7 +51,7 @@ trait EasyJDBC {
     }
 
     sqlExecute { connection =>
-      val statement = prepareStatement(connection, sql, params: _*)
+      val statement = createStatement(connection, sql, params: _*)
       val results = statement.executeQuery
 
       results.map(resultProcessor(_))
@@ -64,20 +64,20 @@ trait EasyJDBC {
     results.length match {
       case 0 => None
       case 1 => Some(results.next)
-      case x => throw new IllegalStateException("More than one records found")
+      case x => throw new IllegalStateException("Expected 0 or 1 records, found " + x)
     }
   }
 
   /**execute an update */
   def sqlUpdate(sql: String, params: Any*) {
     sqlExecute { connection =>
-      val statement = prepareStatement(connection, sql, params: _*)
+      val statement = createStatement(connection, sql, params: _*)
       statement.executeQuery
     }
   }
 
   /**set the parameters on the prepared statement */
-  private[easyjdbc] def prepareStatement(connection: Connection, sql: String, params: Any*) = {
+  private[easyjdbc] def createStatement(connection: Connection, sql: String, params: Any*) = {
     val marks = sql.count(_ == '?')
     assert(marks == params.size, "Incorrect number of PreparedStatement parameters: " + marks + " vs " + params.size)
 
@@ -114,40 +114,24 @@ trait EasyJDBC {
 }
 
 object EasyJDBC {
-  var factory: ConnectionFactory = null
-  var errorHandler: ErrorHandler = DefaultErrorHandler
+  var connection: () => Connection = _
+  var errorHandler: Throwable => Throwable = { e => e }
 
-  trait ConnectionFactory {
-    def connection: Connection
+  private[easyjdbc] val thread = new ThreadLocal[ConnectionManager] {
+    override def initialValue = new ConnectionManager
   }
 
-  trait ErrorHandler {
-    def handle(e: Throwable): Throwable
-  }
-
-  object DefaultErrorHandler extends ErrorHandler {
-    override def handle(e: Throwable) = {
-      throw e
-    }
-  }
-
-  class JNDIConnectionFactory(jndiName: String) extends ConnectionFactory {
-    val dataSource: DataSource = new InitialContext().lookup(jndiName).asInstanceOf[DataSource]
-
-    override def connection: Connection = {
-      dataSource.getConnection
-    }
-
-    override def toString = "JNDI connection factory to " + jndiName
-  }
+  def borrowConnection = thread.get.borrow
+  def returnConnection = thread.get.back
 
   private[easyjdbc] class ConnectionManager {
     private var depth = 0
-    private lazy val cached: Connection = factory.connection
+    private var cached: Connection = _
 
-    assert(factory != null, "No factory configured for EasyJDBC. Make sure you set the EasyJDBC.factory field!")
+    require(connection != null, "No factory configured for EasyJDBC. Make sure you set the EasyJDBC.factory field!")
 
-    def connection = {
+    def borrow = {
+      if (depth == 0) cached = connection()
       depth += 1
       cached
     }
@@ -166,9 +150,5 @@ object EasyJDBC {
         case e => // silent
       }
     }
-  }
-
-  private[easyjdbc] val thread = new ThreadLocal[ConnectionManager] {
-    override def initialValue = new ConnectionManager
   }
 }

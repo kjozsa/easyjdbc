@@ -28,26 +28,26 @@ class TestPrepareStatement extends FunSuite with MockitoSugar with BeforeAndAfte
   test("handle wrong number of parameters") {
     intercept[AssertionError] {
       new Object with EasyJDBC {
-        prepareStatement(connection, "select missing from parameter where stuff = ?")
+        createStatement(connection, "select missing from parameter where stuff = ?")
       }
     }
 
     intercept[AssertionError] {
       new Object with EasyJDBC {
-        prepareStatement(connection, "select missing from parameter where stuff = ?", "too", "much")
+        createStatement(connection, "select missing from parameter where stuff = ?", "too", "much")
       }
     }
   }
 
   test("parameterless") {
     new Object with EasyJDBC {
-      prepareStatement(connection, "select 1 from dual")
+      createStatement(connection, "select 1 from dual")
     }
   }
 
   test("null parameters") {
     new Object with EasyJDBC {
-      prepareStatement(connection, "select blah ? and ?", null, None)
+      createStatement(connection, "select blah ? and ?", null, None)
     }
     verify(statement).setNull(1, Types.NULL)
     verify(statement).setNull(2, Types.NULL)
@@ -55,21 +55,21 @@ class TestPrepareStatement extends FunSuite with MockitoSugar with BeforeAndAfte
 
   test("Option type") {
     new Object with EasyJDBC {
-      prepareStatement(connection, "..where name = ?", Some("Joe"))
+      createStatement(connection, "..where name = ?", Some("Joe"))
     }
     verify(statement).setString(1, "Joe")
   }
 
   test("string type") {
     new Object with EasyJDBC {
-      prepareStatement(connection, "select * from person where name = ?", "Joe")
+      createStatement(connection, "select * from person where name = ?", "Joe")
     }
     verify(statement).setString(1, "Joe")
   }
 
   test("boolean type") {
     new Object with EasyJDBC {
-      prepareStatement(connection, "select * from person where divorced = ?", false)
+      createStatement(connection, "select * from person where divorced = ?", false)
     }
     verify(statement).setBoolean(1, false)
   }

@@ -3,19 +3,15 @@
  */
 package org.freeside.easyjdbc
 
-import org.freeside.easyjdbc.EasyJDBC.ErrorHandler
-import org.freeside.easyjdbc.EasyJDBC.JNDIConnectionFactory
-
 /**
  * @author kjozsa
  */
 class Boot {
-  EasyJDBC.factory = new JNDIConnectionFactory("java:comp/env/jdbc/jc_gateway")
-  EasyJDBC.errorHandler = new ErrorHandler {
-    override def handle(e: Throwable) = {
-      println("oops")
-      e
-    }
+  val factory = new JNDIConnectionFactory("java:comp/env/jdbc/something")
+  EasyJDBC.connection = { () => factory.connection }
+  EasyJDBC.errorHandler = { e =>
+    println("oops")
+    e
   }
 }
 

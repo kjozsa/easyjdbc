@@ -1,37 +1,65 @@
+/**
+ *
+ */
 package org.freeside.easyjdbc
 
 import java.sql.Connection
 import org.mockito.Mockito._
-import org.scalatest.{ BeforeAndAfter, FunSuite }
+import org.mockito.Matchers._
 import org.scalatest.mock.MockitoSugar
-import org.freeside.easyjdbc.EasyJDBC.ConnectionFactory
+import org.scalatest.{ BeforeAndAfter, FunSuite }
+import org.freeside.easyjdbc.EasyJDBC.ConnectionManager
 
 /**
  * @author kjozsa
  */
-
 class TestConnectionManagement extends FunSuite with MockitoSugar with BeforeAndAfter {
-  val factory: ConnectionFactory = mock[ConnectionFactory]
-
-  var count = 0
+  val connectionManager = mock[ConnectionManager]
 
   before {
-    EasyJDBC.factory = new ConnectionFactory {
-      def connection = {
-        count += 1
-        println("count: " + count)
-        mock[Connection]
+    EasyJDBC.thread.set(connectionManager)
+  }
+
+  test("sqlExecute borrows threadlocal connection") {
+    new Object with EasyJDBC {
+      sqlExecute(c => {})
+    }
+
+    verify(connectionManager).borrow
+    verify(connectionManager).back
+  }
+
+  test("nested sqlExecute uses the same connection") {
+    new Object with EasyJDBC {
+      sqlExecute { c1 =>
+        sqlExecute { c2 =>
+          assert(c1.eq(c2))
+        }
       }
     }
   }
 
-  test("subsequent calls use different connection") {
-    new Object with EasyJDBC {
-      sqlExecute(c => {})
+  test("connection is rolled back on error") {
+    val connection = mock[Connection]
+    when(connectionManager.borrow).thenReturn(connection)
+
+    intercept[RuntimeException] {
+      new Object with EasyJDBC {
+        sqlExecute { c => throw new RuntimeException }
+      }
     }
-    new Object with EasyJDBC {
-      sqlExecute(c => {})
-    }
+    verify(connection).rollback
   }
 
+  test("errorHandler is called on error") {
+    val errorHandler = mock[Throwable => Throwable]
+    EasyJDBC.errorHandler = errorHandler
+
+    intercept[RuntimeException] {
+      new Object with EasyJDBC {
+        sqlExecute { c => throw new RuntimeException }
+      }
+    }
+    verify(errorHandler).apply(any())
+  }
 }
