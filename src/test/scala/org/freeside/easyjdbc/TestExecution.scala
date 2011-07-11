@@ -19,7 +19,7 @@ class TestExecution extends FunSuite with MockitoSugar with BeforeAndAfter {
 
   test("plain execute") {
     val connection = mock[Connection]
-    EasyJDBC.connection = () => connection
+    EasyJDBC.connectionFactory = () => connection
 
     val statement = mock[PreparedStatement]
     when(connection.prepareStatement(any())).thenReturn(statement)

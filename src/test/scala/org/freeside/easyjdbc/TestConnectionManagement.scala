@@ -4,15 +4,15 @@
 package org.freeside.easyjdbc
 
 import java.sql.Connection
-import org.freeside.easyjdbc.EasyJDBC.ConnectionManager
+
 import org.junit.runner.RunWith
 import org.mockito.Matchers.any
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.when
+import org.scalatest.junit.JUnitRunner
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.BeforeAndAfter
 import org.scalatest.FunSuite
-import org.scalatest.junit.JUnitRunner
 
 /**
  * @author kjozsa

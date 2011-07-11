@@ -3,13 +3,15 @@
  */
 package org.freeside.easyjdbc
 import java.sql.DriverManager
+import java.io.File
 
 /**
  * @author kjozsa
  */
 object Boot {
   Class.forName("org.h2.Driver");
-  EasyJDBC.connection = () => DriverManager.getConnection("jdbc:h2:testdb")
+  val dbLocation = System.getProperty("java.io.tmpdir") + "/testdb"
+  EasyJDBC.connectionFactory = () => DriverManager.getConnection("jdbc:h2:" + dbLocation)
   EasyJDBC.errorHandler = { e =>
     e.printStackTrace
     e

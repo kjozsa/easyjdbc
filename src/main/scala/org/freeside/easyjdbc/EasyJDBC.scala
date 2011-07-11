@@ -120,41 +120,13 @@ trait EasyJDBC {
 }
 
 object EasyJDBC {
-  var connection: () => Connection = _
+  var connectionFactory: () => Connection = _
   var errorHandler: Throwable => Throwable = { e => e }
 
   private[easyjdbc] val thread = new ThreadLocal[ConnectionManager] {
-    override def initialValue = new ConnectionManager
+    override def initialValue = new ConnectionManager(connectionFactory)
   }
 
-  def borrowConnection = thread.get.borrow
-  def returnConnection = thread.get.back
-
-  private[easyjdbc] class ConnectionManager {
-    private var depth = 0
-    private var cached: Connection = _
-
-    require(connection != null, "No factory configured for EasyJDBC. Make sure you set the EasyJDBC.factory field!")
-
-    def borrow = {
-      if (depth == 0) cached = connection()
-      depth += 1
-      cached
-    }
-
-    def back {
-      depth -= 1
-      if (depth == 0) {
-        cleanup(cached)
-      }
-    }
-
-    private def cleanup(connection: Connection) {
-      try {
-        connection.close
-      } catch {
-        case e => // silent
-      }
-    }
-  }
+  private def borrowConnection = thread.get.borrow
+  private def returnConnection = thread.get.back
 }

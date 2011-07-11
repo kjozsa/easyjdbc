@@ -18,7 +18,7 @@ class TestConnectionFactoryUsage extends FunSuite with MockitoSugar with BeforeA
 
   before({
     count = 0
-    EasyJDBC.connection = { () =>
+    EasyJDBC.connectionFactory = { () =>
       count += 1
       mock[Connection]
     }
