@@ -120,13 +120,19 @@ trait EasyJDBC {
 }
 
 object EasyJDBC {
+  /** how to get a connection */
   var connectionFactory: () => Connection = _
+
+  /** how to get rid of connection */
+  var connectionCleaner: Connection => Unit = { connection => connection.close }
+
+  /** how to manage errors */
   var errorHandler: Throwable => Throwable = { e => e }
 
-  private[easyjdbc] val thread = new ThreadLocal[ConnectionManager] {
+  private[easyjdbc] val threadConnectionManager = new ThreadLocal[ConnectionManager] {
     override def initialValue = new ConnectionManager(connectionFactory)
   }
 
-  private def borrowConnection = thread.get.borrow
-  private def returnConnection = thread.get.back
+  private def borrowConnection = threadConnectionManager.get.borrow
+  private def returnConnection = threadConnectionManager.get.back
 }
