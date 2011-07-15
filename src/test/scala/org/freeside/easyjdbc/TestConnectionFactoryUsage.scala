@@ -8,27 +8,28 @@ import org.scalatest.mock.MockitoSugar
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import java.sql.PreparedStatement
+import org.scalatest.BeforeAndAfterEach
 
 /**
  * @author kjozsa
  */
 @RunWith(classOf[JUnitRunner])
-class TestConnectionFactoryUsage extends FunSuite with MockitoSugar with BeforeAndAfter {
+class TestConnectionFactoryUsage extends FunSuite with MockitoSugar with BeforeAndAfterEach {
 
   // counts how many time the connection was borrowed from the factory
   var count: Int = _
 
-  before({
-    count = 0
+  EasyJDBC.connectionFactory = { () =>
+    count += 1
+    val connection = mock[Connection]
+    val statement = mock[PreparedStatement]
+    when(connection.prepareStatement(any())).thenReturn(statement)
+    connection
+  }
 
-    EasyJDBC.connectionFactory = { () =>
-      count += 1
-      val connection = mock[Connection]
-      val statement = mock[PreparedStatement]
-      when(connection.prepareStatement(any())).thenReturn(statement)
-      connection
-    }
-  })
+  override def beforeEach {
+    count = 0
+  }
 
   test("subsequent calls use the same connection from factory")({
     new EasyJDBC {

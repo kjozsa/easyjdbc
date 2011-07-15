@@ -15,7 +15,7 @@ import org.scalatest.junit.JUnitRunner
  * @author kjozsa
  */
 @RunWith(classOf[JUnitRunner])
-class TestExecution extends FunSuite with MockitoSugar with BeforeAndAfter {
+class TestExecution extends FunSuite with MockitoSugar {
 
   test("plain execute") {
     val connection = mock[Connection]

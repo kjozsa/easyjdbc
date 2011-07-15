@@ -13,16 +13,17 @@ import java.sql.PreparedStatement
 import java.sql.Types
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
+import org.scalatest.BeforeAndAfterEach
 
 /**
  * @author kjozsa
  */
 @RunWith(classOf[JUnitRunner])
-class TestPrepareStatement extends FunSuite with MockitoSugar with BeforeAndAfter {
+class TestPrepareStatement extends FunSuite with MockitoSugar with BeforeAndAfterEach {
   val connection = mock[Connection]
   val statement = mock[PreparedStatement]
 
-  before {
+  override def beforeEach {
     reset(connection)
     reset(statement)
     when(connection.prepareStatement(any())).thenReturn(statement)
