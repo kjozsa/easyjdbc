@@ -7,7 +7,7 @@ import java.sql.Connection
 /**
  * @author kjozsa
  */
-private[easyjdbc] class ConnectionManager(connectionFactory: () => Connection) {
+private[easyjdbc] class ConnectionManager(connectionFactory: () => Connection, connectionCleaner: Connection => Unit) {
   private var depth = 0
   private var connection: Connection = _
 
@@ -28,7 +28,7 @@ private[easyjdbc] class ConnectionManager(connectionFactory: () => Connection) {
 
   private def close(connection: Connection) {
     try {
-      connection.close
+      connectionCleaner(connection)
     } catch {
       case e => // silent
     }

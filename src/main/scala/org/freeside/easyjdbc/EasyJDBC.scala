@@ -130,7 +130,7 @@ object EasyJDBC {
   var errorHandler: Throwable => Throwable = { e => e }
 
   private[easyjdbc] val threadConnectionManager = new ThreadLocal[ConnectionManager] {
-    override def initialValue = new ConnectionManager(connectionFactory)
+    override def initialValue = new ConnectionManager(connectionFactory, connectionCleaner)
   }
 
   private def borrowConnection = threadConnectionManager.get.borrow

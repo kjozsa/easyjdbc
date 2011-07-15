@@ -20,7 +20,7 @@ import org.scalatest.BeforeAndAfterEach
 @RunWith(classOf[JUnitRunner])
 class TestConnectionManagement extends FunSuite with MockitoSugar {
   val connectionManager = mock[ConnectionManager]
-  EasyJDBC.thread.set(connectionManager)
+  EasyJDBC.threadConnectionManager.set(connectionManager)
 
   test("sqlExecute borrows threadlocal connection") {
     new Object with EasyJDBC {
