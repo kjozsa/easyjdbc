@@ -44,37 +44,40 @@ trait EasyJDBC {
     }
   }
 
-  /** execute an sql query and process a list of results by records */
+  /** execute an sql query and return an iterator of the processed list of results */
   def sqlQuery[T](sql: String, params: Any*)(resultProcessor: ResultSet => T): Iterator[T] = {
-    implicit def iterableResultSet(rs: ResultSet) = {
-      new Iterator[ResultSet] {
-        override def hasNext = rs.next
-        override def next = rs
-      }
-    }
-
     withConnection { connection =>
       val statement = createStatement(connection, sql, params: _*)
       val results = statement.executeQuery
 
-      results.map(resultProcessor(_))
+      val elements = new Iterator[ResultSet] {
+        override def hasNext = results.next
+        override def next = results
+      }
+
+      elements map (resultProcessor(_))
     }
   }
 
-  /** query for 0 or 1 record */
-  def sqlQueryOne[T](sql: String, params: Any*)(resultProcessor: ResultSet => T): Option[T] = {
-    withConnection { c =>
+  def sqlFetch[T](sql: String, params: Any*)(resultProcessor: ResultSet => T): List[T] = {
+    withConnection { connection =>
       val results = sqlQuery(sql, params: _*)(resultProcessor)
-      results.length match {
-        case 0 => None
-        case 1 => Some(results.next)
-        case x => throw new IllegalStateException("Expected 0 or 1 but found " + x + " records")
-      }
+      results toList
+    }
+  }
+
+  /** fetch 0 or 1 record with query */
+  def sqlFetchOne[T](sql: String, params: Any*)(resultProcessor: java.sql.ResultSet => T): Option[T] = {
+    val results = sqlFetch(sql, params: _*)(resultProcessor)
+    results.length match {
+      case 0 => None
+      case 1 => Some(results.head)
+      case x => throw new IllegalStateException("Expected 0 or 1 but found " + x + " records")
     }
   }
 
   /** execute an update */
-  def sqlUpdate(sql: String, params: Any*) {
+  def sqlUpdate(sql: String, params: Any*) = {
     withConnection { connection =>
       val statement = createStatement(connection, sql, params: _*)
       statement.executeUpdate

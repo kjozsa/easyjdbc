@@ -5,6 +5,7 @@ package org.freeside.easyjdbc
 import java.sql.Connection
 
 /**
+ * manage connections for nested calls. gets connection from the factory, returns it to the cleaner
  * @author kjozsa
  */
 private[easyjdbc] class ConnectionManager(connectionFactory: () => Connection, connectionCleaner: Connection => Unit) {
@@ -22,11 +23,11 @@ private[easyjdbc] class ConnectionManager(connectionFactory: () => Connection, c
   def back {
     depth -= 1
     if (depth == 0) {
-      close(connection)
+      cleanup(connection)
     }
   }
 
-  private def close(connection: Connection) {
+  private def cleanup(connection: Connection) {
     try {
       connectionCleaner(connection)
     } catch {
