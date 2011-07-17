@@ -23,20 +23,20 @@ object Client extends App with ConfiguredEasyJDBC {
 		  insert into person (name, city, zip) values ('Susan', 'London', 23456);
 		  """)
 
-  // fetch some
-  val person = sqlFetch("select name from person") { _.getString(1) }
-  println("fetched: " + person.size)
-  println(person.head)
-
-  // fetch one
-  println("count person: " + sqlFetchOne("select count(*) from person") { _.getInt(1) })
-
   // fetch none
   val client = sqlFetchOne("select is_client from person where name = ?", "Joe") { _.getBoolean(1) }
   assert(client == None)
 
-  // select tuple
-  val results: Option[Tuple2[String, Int]] = sqlFetchOne("select city, zip from person where name = ?", "Susan") { rs =>
+  // fetch some
+  val personList = sqlFetch("select name from person") { _.getString(1) }
+  println("fetched: " + personList.size)
+  println(personList.head)
+
+  // fetch one
+  println("count person: " + sqlFetchOne("select count(*) from person") { _.getInt(1) })
+
+  // select Option[Tuple]
+  val results = sqlFetchOne("select city, zip from person where name = ?", "Susan") { rs =>
     (rs.getString(1), rs.getInt(2))
   }
 
@@ -47,6 +47,6 @@ object Client extends App with ConfiguredEasyJDBC {
   val (name, date) = ("Joe", new java.util.Date())
   sqlQuery("select * from person where name = ? and born > ?", name, date) { _.getString(1) }
 
-  // update
+  // execute update
   println("updated: " + sqlUpdate("update person set divorced = ?", true))
 }

@@ -34,13 +34,13 @@ class TestPrepareStatement extends FunSuite with MockitoSugar with BeforeAndAfte
   }
 
   test("handle wrong number of parameters") {
-    intercept[AssertionError] {
+    intercept[IllegalArgumentException] {
       new Object with TestEasyJDBC {
         createStatement(connection, "select missing from parameter where stuff = ?")
       }
     }
 
-    intercept[AssertionError] {
+    intercept[IllegalArgumentException] {
       new Object with TestEasyJDBC {
         createStatement(connection, "select missing from parameter where stuff = ?", "too", "much")
       }

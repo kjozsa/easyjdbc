@@ -104,7 +104,7 @@ trait EasyJDBC {
   /** set the parameters on the prepared statement */
   private[easyjdbc] def createStatement(connection: Connection, sql: String, params: Any*) = {
     val marks = sql.count(_ == '?')
-    assert(marks == params.size, "Incorrect number of PreparedStatement parameters: " + marks + " vs " + params.size)
+    require(marks == params.size, "Incorrect number of PreparedStatement parameters: " + marks + " vs " + params.size)
 
     val statement = connection.prepareStatement(sql)
 
