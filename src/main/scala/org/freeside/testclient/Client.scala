@@ -8,19 +8,14 @@ import java.io.File
 /**
  * @author kjozsa
  */
-object Boot {
+trait ConfiguredEasyJDBC extends EasyJDBC {
   Class.forName("org.h2.Driver");
   val dbLocation = System.getProperty("java.io.tmpdir") + "/testdb"
-  EasyJDBC.connectionFactory = () => DriverManager.getConnection("jdbc:h2:" + dbLocation)
-  EasyJDBC.errorHandler = { e =>
-    e.printStackTrace
-    e
-  }
+
+  val connectionFactory = () => DriverManager.getConnection("jdbc:h2:" + dbLocation)
 }
 
-object Client extends App with EasyJDBC {
-  Boot
-
+object Client extends App with ConfiguredEasyJDBC {
   sqlUpdate("""
 		  drop table if exists person; 
 		  create table person (name varchar(50), city varchar(50), zip int, born date, divorced boolean, is_client boolean);
@@ -41,7 +36,7 @@ object Client extends App with EasyJDBC {
   assert(client == None)
 
   // select tuple
-  val results = sqlFetchOne("select city, zip from person where name = ?", "Susan") { rs =>
+  val results: Option[Tuple2[String, Int]] = sqlFetchOne("select city, zip from person where name = ?", "Susan") { rs =>
     (rs.getString(1), rs.getInt(2))
   }
 

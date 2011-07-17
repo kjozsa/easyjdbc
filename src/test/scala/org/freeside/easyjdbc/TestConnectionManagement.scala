@@ -20,19 +20,23 @@ import org.scalatest.BeforeAndAfterEach
 @RunWith(classOf[JUnitRunner])
 class TestConnectionManagement extends FunSuite with MockitoSugar {
   val connectionManager = mock[ConnectionManager]
-  EasyJDBC.threadConnectionManager.set(connectionManager)
+
+  trait TestEasyJDBC extends EasyJDBC {
+    threadConnectionManager.set(connectionManager)
+    val connectionFactory = null
+  }
 
   test("sqlExecute borrows threadlocal connection") {
-    new Object with EasyJDBC {
+    new Object with TestEasyJDBC {
       withConnection(c => {})
-    }
 
-    verify(connectionManager).borrow
-    verify(connectionManager).back
+      verify(connectionManager).borrow
+      verify(connectionManager).back
+    }
   }
 
   test("nested sqlExecute uses the same connection") {
-    new Object with EasyJDBC {
+    new Object with TestEasyJDBC {
       withConnection { c1 =>
         withConnection { c2 =>
           assert(c1.eq(c2))
@@ -46,7 +50,7 @@ class TestConnectionManagement extends FunSuite with MockitoSugar {
     when(connectionManager.borrow).thenReturn(connection)
 
     intercept[RuntimeException] {
-      new Object with EasyJDBC {
+      new Object with TestEasyJDBC {
         withConnection { c => throw new RuntimeException }
       }
     }
@@ -54,12 +58,16 @@ class TestConnectionManagement extends FunSuite with MockitoSugar {
   }
 
   test("errorHandler is called on error") {
-    val errorHandler = mock[Throwable => Throwable]
-    EasyJDBC.errorHandler = errorHandler
+    trait TestEasyJDBC extends EasyJDBC {
+      errorHandler = mock[Throwable => Throwable]
+      val connectionFactory = null
+    }
 
     intercept[RuntimeException] {
-      new Object with EasyJDBC {
+      new Object with TestEasyJDBC {
         withConnection { c => throw new RuntimeException }
+
+        verify(errorHandler)
       }
     }
   }

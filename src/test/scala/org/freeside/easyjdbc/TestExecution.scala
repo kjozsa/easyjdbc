@@ -19,7 +19,6 @@ class TestExecution extends FunSuite with MockitoSugar {
 
   test("plain execute") {
     val connection = mock[Connection]
-    EasyJDBC.connectionFactory = () => connection
 
     val statement = mock[PreparedStatement]
     when(connection.prepareStatement(any())).thenReturn(statement)
@@ -28,6 +27,7 @@ class TestExecution extends FunSuite with MockitoSugar {
     when(statement.executeQuery()).thenReturn(results)
 
     new Object with EasyJDBC {
+      val connectionFactory = () => connection
       sqlQuery("select * from person") { rs =>
         println("resultset: " + rs)
       }

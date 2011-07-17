@@ -18,20 +18,36 @@ import java.util.Date
  * @author kjozsa
  */
 trait EasyJDBC {
-  private val logger = LoggerFactory.getLogger(EasyJDBC.getClass)
+  /** how to get a connection */
+  val connectionFactory: () => Connection
+
+  /** how to get rid of connection */
+  var connectionCleaner: Connection => Unit = { connection => connection.close }
+
+  /** how to manage errors */
+  var errorHandler: Throwable => Throwable = { e => e }
+
+  private val logger = LoggerFactory.getLogger(getClass)
+
+  private[easyjdbc] val threadConnectionManager = new ThreadLocal[ConnectionManager] {
+    override def initialValue = new ConnectionManager(connectionFactory, connectionCleaner)
+  }
+
+  private def borrowConnection = threadConnectionManager.get.borrow
+  private def returnConnection = threadConnectionManager.get.back
 
   /** execute something using a new or threadlocal connection */
   def withConnection[T](executeBlock: java.sql.Connection => T): T = {
-    val connection = EasyJDBC.borrowConnection
+    val connection = borrowConnection
     try {
       executeBlock(connection)
     } catch {
       case e =>
         rollback(connection)
-        throw EasyJDBC.errorHandler(e)
+        throw errorHandler(e)
 
     } finally {
-      EasyJDBC.returnConnection
+      returnConnection
     }
   }
 
@@ -59,6 +75,7 @@ trait EasyJDBC {
     }
   }
 
+  /** execute an sql query and return all results fetched */
   def sqlFetch[T](sql: String, params: Any*)(resultProcessor: ResultSet => T): List[T] = {
     withConnection { connection =>
       val results = sqlQuery(sql, params: _*)(resultProcessor)
@@ -100,7 +117,7 @@ trait EasyJDBC {
     statement
   }
 
-  /** handle any other type */
+  /** add a parameter handling types correctly */
   private def addParameter(statement: PreparedStatement, position: Int, value: Any) {
     value match {
       case null => statement.setNull(position, Types.NULL)
@@ -120,22 +137,4 @@ trait EasyJDBC {
       case other => throw new UnsupportedOperationException("Unsupported parameter type of " + other)
     }
   }
-}
-
-object EasyJDBC {
-  /** how to get a connection */
-  var connectionFactory: () => Connection = _
-
-  /** how to get rid of connection */
-  var connectionCleaner: Connection => Unit = { connection => connection.close }
-
-  /** how to manage errors */
-  var errorHandler: Throwable => Throwable = { e => e }
-
-  private[easyjdbc] val threadConnectionManager = new ThreadLocal[ConnectionManager] {
-    override def initialValue = new ConnectionManager(connectionFactory, connectionCleaner)
-  }
-
-  private def borrowConnection = threadConnectionManager.get.borrow
-  private def returnConnection = threadConnectionManager.get.back
 }

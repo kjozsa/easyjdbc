@@ -19,12 +19,14 @@ class TestConnectionFactoryUsage extends FunSuite with MockitoSugar with BeforeA
   // counts how many time the connection was borrowed from the factory
   var count: Int = _
 
-  EasyJDBC.connectionFactory = { () =>
-    count += 1
-    val connection = mock[Connection]
-    val statement = mock[PreparedStatement]
-    when(connection.prepareStatement(any())).thenReturn(statement)
-    connection
+  trait ConfiguredEasyJDBC extends EasyJDBC {
+    val connectionFactory = { () => 
+      count += 1
+      val connection = mock[Connection]
+      val statement = mock[PreparedStatement]
+      when(connection.prepareStatement(any())).thenReturn(statement)
+      connection
+    }
   }
 
   override def beforeEach {
@@ -32,7 +34,7 @@ class TestConnectionFactoryUsage extends FunSuite with MockitoSugar with BeforeA
   }
 
   test("subsequent calls use the same connection from factory")({
-    new EasyJDBC {
+    new ConfiguredEasyJDBC {
       withConnection(c => {
         sqlQuery("select 1 from dual") { rs => }
         sqlQuery("select 1 from dual") { rs => }
@@ -43,7 +45,7 @@ class TestConnectionFactoryUsage extends FunSuite with MockitoSugar with BeforeA
 
   test("separate calls use different connection from factory")({
     var c1, c2: Connection = null
-    new EasyJDBC {
+    new ConfiguredEasyJDBC {
       assert(count === 0)
       withConnection(c => { c1 = c })
 
@@ -56,12 +58,12 @@ class TestConnectionFactoryUsage extends FunSuite with MockitoSugar with BeforeA
   })
 
   test("separate objects use different connection from factory")({
-    new Object with EasyJDBC {
+    new Object with ConfiguredEasyJDBC {
       withConnection(c => {})
     }
     assert(count === 1)
 
-    new Object with EasyJDBC {
+    new Object with ConfiguredEasyJDBC {
       withConnection(c => {})
     }
     assert(count === 2)
