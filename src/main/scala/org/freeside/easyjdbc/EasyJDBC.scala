@@ -60,6 +60,8 @@ trait EasyJDBC {
     }
   }
 
+  implicit def rs2EasyRS(rs: ResultSet) = new EasyResultSet(rs)
+
   /** execute an sql query and return an iterator of the processed list of results */
   def sqlQuery[T](sql: String, params: Any*)(resultProcessor: ResultSet => T): Iterator[T] = {
     withConnection { connection =>
@@ -84,7 +86,7 @@ trait EasyJDBC {
   }
 
   /** fetch 0 or 1 record with query */
-  def sqlFetchOne[T](sql: String, params: Any*)(resultProcessor: java.sql.ResultSet => T): Option[T] = {
+  def sqlFetchOne[T](sql: String, params: Any*)(resultProcessor: ResultSet => T): Option[T] = {
     val results = sqlFetch(sql, params: _*)(resultProcessor)
     results.length match {
       case 0 => None
@@ -130,9 +132,9 @@ trait EasyJDBC {
       case value: Long => statement.setLong(position, value)
       case value: Float => statement.setFloat(position, value)
       case value: Double => statement.setDouble(position, value)
+      //      case value: BigDecimal => statement.setBigDecimal(position, value) // @TODO convert to java bigdecimal
       case value: Timestamp => statement.setTimestamp(position, value)
       case value: Date => statement.setTimestamp(position, new Timestamp(value.getTime))
-      //      case value: BigDecimal => statement.setBigDecimal(position, value) // @TODO convert to java bigdecimal
       case value: String => statement.setString(position, value)
       case other => throw new UnsupportedOperationException("Unsupported parameter type of " + other)
     }

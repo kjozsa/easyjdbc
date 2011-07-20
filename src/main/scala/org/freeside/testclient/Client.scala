@@ -4,6 +4,7 @@
 package org.freeside.easyjdbc
 import java.sql.DriverManager
 import java.io.File
+import java.sql.ResultSet
 
 /**
  * @author kjozsa
@@ -39,9 +40,13 @@ object Client extends App with ConfiguredEasyJDBC {
   val results = sqlFetchOne("select city, zip from person where name = ?", "Susan") { rs =>
     (rs.getString(1), rs.getInt(2))
   }
-
   val (city, zip) = results.get
   println("city: " + city + ", zip: " + zip)
+
+  // alternate syntax with auto count
+  val (city2, zip2) = sqlFetchOne("select city, zip from person where name = ?", "Susan") { rs =>
+    (rs.nextString, rs.nextInt)
+  }.get
 
   // select with parameters
   val (name, date) = ("Joe", new java.util.Date())
