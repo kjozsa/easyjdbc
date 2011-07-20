@@ -60,10 +60,11 @@ trait EasyJDBC {
     }
   }
 
-  implicit def rs2EasyRS(rs: ResultSet) = new EasyResultSet(rs)
+  implicit def resultSet2EasyRS(rs: ResultSet) = new EasyResultSet(rs)
+  implicit def easyRS2ResultSet(ers: EasyResultSet) = ers.rs
 
   /** execute an sql query and return an iterator of the processed list of results */
-  def sqlQuery[T](sql: String, params: Any*)(resultProcessor: ResultSet => T): Iterator[T] = {
+  def sqlQuery[T](sql: String, params: Any*)(resultProcessor: EasyResultSet => T): Iterator[T] = {
     withConnection { connection =>
       val statement = createStatement(connection, sql, params: _*)
       val results = statement.executeQuery
@@ -78,7 +79,7 @@ trait EasyJDBC {
   }
 
   /** execute an sql query and return all results fetched */
-  def sqlFetch[T](sql: String, params: Any*)(resultProcessor: ResultSet => T): List[T] = {
+  def sqlFetch[T](sql: String, params: Any*)(resultProcessor: EasyResultSet => T): List[T] = {
     withConnection { connection =>
       val results = sqlQuery(sql, params: _*)(resultProcessor)
       results toList
@@ -86,7 +87,7 @@ trait EasyJDBC {
   }
 
   /** fetch 0 or 1 record with query */
-  def sqlFetchOne[T](sql: String, params: Any*)(resultProcessor: ResultSet => T): Option[T] = {
+  def sqlFetchOne[T](sql: String, params: Any*)(resultProcessor: EasyResultSet => T): Option[T] = {
     val results = sqlFetch(sql, params: _*)(resultProcessor)
     results.length match {
       case 0 => None

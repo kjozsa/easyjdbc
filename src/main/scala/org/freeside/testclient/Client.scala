@@ -50,7 +50,7 @@ object Client extends App with ConfiguredEasyJDBC {
 
   // select with parameters
   val (name, date) = ("Joe", new java.util.Date())
-  sqlQuery("select * from person where name = ? and born > ?", name, date) { _.getString(1) }
+  sqlQuery("select * from person where name = ? and born > ?", name, date) { _.nextString }
 
   // execute update
   println("updated: " + sqlUpdate("update person set divorced = ?", true))

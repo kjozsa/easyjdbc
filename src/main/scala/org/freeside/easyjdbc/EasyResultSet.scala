@@ -4,11 +4,27 @@
 package org.freeside.easyjdbc
 
 import java.sql.ResultSet
+import java.sql.Date
+import java.sql.Time
+import java.sql.Timestamp
+import java.io.InputStream
+import java.sql.SQLWarning
+import java.sql.ResultSetMetaData
+import java.io.Reader
+import java.sql.Statement
+import java.sql.Ref
+import java.sql.RowId
+import java.sql.Clob
+import java.net.URL
+import java.sql.NClob
+import java.sql.Blob
+import java.sql.SQLXML
+import java.util.Calendar
 
 /**
  * @author kjozsa
  */
-class EasyResultSet(rs: ResultSet) {
+class EasyResultSet(val rs: ResultSet) {
   private var count = 0
 
   def withCount[T](block: Int => T) = {
@@ -26,5 +42,5 @@ class EasyResultSet(rs: ResultSet) {
   def nextTimestamp = withCount(rs.getTimestamp(_))
   def nextDate = withCount(rs.getTimestamp(_))
   def nextString = withCount(rs.getString(_))
-
 }
+
