@@ -1,6 +1,6 @@
-name := "My Project"
+name := "EasyJDBC"
 
-version := "1.0"
+version := "0.5"
 
 libraryDependencies ++= Seq(
     "junit" % "junit" % "4.8.2",

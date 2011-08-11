@@ -36,7 +36,7 @@ trait EasyJDBC {
   private def borrowConnection = threadConnectionManager.get.borrow
   private def returnConnection = threadConnectionManager.get.back
 
-  /** execute something using a new or threadlocal connection */
+  /** execute a block using a new or threadlocal connection */
   def withConnection[T](executeBlock: java.sql.Connection => T): T = {
     val connection = borrowConnection
     try {
@@ -88,11 +88,18 @@ trait EasyJDBC {
 
   /** fetch 0 or 1 record with query */
   def sqlFetchOne[T](sql: String, params: Any*)(resultProcessor: EasyResultSet => T): Option[T] = {
-    val results = sqlFetch(sql, params: _*)(resultProcessor)
-    results.length match {
-      case 0 => None
-      case 1 => Some(results.head)
-      case x => throw new IllegalStateException("Expected 0 or 1 but found " + x + " records")
+    withConnection { connection =>
+      val statement = createStatement(connection, sql, params: _*)
+      val results = statement.executeQuery
+
+      try {
+        results.next match {
+          case false => None
+          case true => Some(resultProcessor(results))
+        }
+      } finally {
+        if (results.next()) throw new IllegalStateException("Expected 0 or 1 but found more records")
+      }
     }
   }
 
