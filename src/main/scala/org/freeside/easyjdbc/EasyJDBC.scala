@@ -15,6 +15,22 @@ import org.slf4j.LoggerFactory
 import java.util.Date
 
 /**
+ * Trait to add the following functionalities:
+ * - automatic connection management, even on wrapped calls
+ * - auto rollback on errors
+ * - inline parameter setting using the correct types
+ * - fetchOne method for 0 or 1 result records using Option type
+ * - lazy or prefetched resultsets
+ * - enriched resultset with auto counting using next* methods
+ *
+ * Basic usage:
+ * - implement the trait
+ * - set the connectionFactory wiring your connection pool
+ * - optionally change the default connectionCleaner and errorHandler
+ * - use the sql* methods
+ *
+ * For more convenient usage, create your own trait with the proper configuration and use that all around.
+ *
  * @author kjozsa
  */
 trait EasyJDBC {
@@ -22,7 +38,13 @@ trait EasyJDBC {
   val connectionFactory: () => Connection
 
   /** how to get rid of connection */
-  var connectionCleaner: Connection => Unit = { connection => connection.close }
+  var connectionCleaner: Connection => Unit = { connection =>
+    try {
+      connection.close
+    } catch {
+      case e => logger.warn("failed to close connection", e)
+    }
+  }
 
   /** how to manage errors */
   var errorHandler: Throwable => Throwable = { e => e }
@@ -41,6 +63,7 @@ trait EasyJDBC {
     val connection = borrowConnection
     try {
       executeBlock(connection)
+
     } catch {
       case e =>
         rollback(connection)
@@ -56,7 +79,7 @@ trait EasyJDBC {
     try {
       if (!connection.getAutoCommit) connection.rollback
     } catch {
-      case e => // silent 
+      case e => logger.error("failed to rollback connection", e)
     }
   }
 
@@ -140,7 +163,7 @@ trait EasyJDBC {
       case value: Long => statement.setLong(position, value)
       case value: Float => statement.setFloat(position, value)
       case value: Double => statement.setDouble(position, value)
-      //      case value: BigDecimal => statement.setBigDecimal(position, value) // @TODO convert to java bigdecimal
+      case value: BigDecimal => statement.setBigDecimal(position, value.underlying())
       case value: Timestamp => statement.setTimestamp(position, value)
       case value: Date => statement.setTimestamp(position, new Timestamp(value.getTime))
       case value: String => statement.setString(position, value)

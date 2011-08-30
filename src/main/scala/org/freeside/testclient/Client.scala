@@ -14,6 +14,10 @@ trait ConfiguredEasyJDBC extends EasyJDBC {
   val dbLocation = System.getProperty("java.io.tmpdir") + "/testdb"
 
   val connectionFactory = () => DriverManager.getConnection("jdbc:h2:" + dbLocation)
+  errorHandler = { e =>
+    e.printStackTrace
+    e
+  }
 }
 
 object Client extends App with ConfiguredEasyJDBC {
@@ -43,7 +47,7 @@ object Client extends App with ConfiguredEasyJDBC {
   val (city, zip) = results.get
   println("city: " + city + ", zip: " + zip)
 
-  // alternate syntax with auto count
+  // alternate syntax using next* methods with auto count
   val (city2, zip2) = sqlFetchOne("select city, zip from person where name = ?", "Susan") { rs =>
     (rs.nextString, rs.nextInt)
   }.get
