@@ -58,4 +58,14 @@ object Client extends App with ConfiguredEasyJDBC {
 
   // execute update
   println("updated: " + sqlUpdate("update person set divorced = ?", true))
+
+  // easy resultset implicit extractor
+  object Result {
+    def unapply(ers: EasyResultSet): Option[(String, EasyResultSet)] = {
+      Some(ers.nextString, ers)
+    }
+  }
+
+  val Result(city3, ers) = sqlFetchOneERS("select city, zip from person where name = ?", "Susan").get
+  sqlFetch("select city, zip from person where name = ?", "Susan", Tuple2[String, Int] _) _
 }

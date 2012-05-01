@@ -86,6 +86,9 @@ trait EasyJDBC {
   implicit def resultSet2EasyRS(rs: ResultSet) = new EasyResultSet(rs)
   implicit def easyRS2ResultSet(ers: EasyResultSet) = ers.rs
 
+  implicit def ers2String(ers: EasyResultSet) = ers.nextString
+  implicit def ers2Int(ers: EasyResultSet) = ers.nextInt
+
   /** execute an sql query and return an iterator of the processed list of results */
   def sqlQuery[T](sql: String, params: Any*)(resultProcessor: EasyResultSet => T): Iterator[T] = {
     withConnection { connection =>
@@ -119,6 +122,23 @@ trait EasyJDBC {
         results.next match {
           case false => None
           case true => Some(resultProcessor(results))
+        }
+      } finally {
+        if (results.next()) throw new IllegalStateException("Expected 0 or 1 but found more records")
+      }
+    }
+  }
+
+  /** fetch 0 or 1 record with query */
+  def sqlFetchOneERS[T](sql: String, params: Any*): Option[EasyResultSet] = {
+    withConnection { connection =>
+      val statement = createStatement(connection, sql, params: _*)
+      val results = statement.executeQuery
+
+      try {
+        results.next match {
+          case false => None
+          case true => Some(results)
         }
       } finally {
         if (results.next()) throw new IllegalStateException("Expected 0 or 1 but found more records")

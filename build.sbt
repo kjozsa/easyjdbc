@@ -12,5 +12,5 @@ libraryDependencies ++= Seq(
 
 scalacOptions += "-deprecation"
 
-scalaVersion := "2.9.0"
+scalaVersion := "2.9.1"
 

@@ -4,6 +4,7 @@
 package org.freeside.testclient
 import java.sql.ResultSet
 import java.sql.Connection
+import org.freeside.easyjdbc.EasyResultSet
 
 /**
  * @author kjozsa
@@ -16,25 +17,18 @@ trait SomeTrait {
   implicit def rsToBoolean(rs: ResultSet) = rs.getBoolean(1)
 
   implicit def rsToTupleStringInt(rs: ResultSet): Tuple2[String, Int] = (rs.getString(1), rs.getInt(2))
+}
+
+class Sample {
+  val rs: EasyResultSet = null
+
+  //  val z: String = rs // rs.nextString
 
 }
 
 trait ConfiguredSome extends SomeTrait {
-  val connectionFactory = { null }
+  val connectionFactory = null
 }
 
-class Else(c: () => Connection) {
-
-}
-
-object Sandbox extends App with ConfiguredSome {
-  val something: Option[Tuple2[String, Int]] = Some("a", 1)
-
-  val (a, one) = something get
-
-  val rs: ResultSet = null
-
-  val tup: Tuple2[String, Int] = rs
-
-  val z = new Else(connectionFactory)
+object Sandbox extends ConfiguredSome {
 }
